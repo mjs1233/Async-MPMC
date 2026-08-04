@@ -8,6 +8,8 @@
 #include <concepts>
 #include <cinttypes>
 
+#include "Action.hpp"
+
 static constexpr size_t MAX_JOB_SIZE = 64;
 
 
@@ -19,7 +21,7 @@ concept job_item_trait = requires(T t) {
 {
     { t.action() };
 }
-&& (sizeof(T) < 64);
+&& (sizeof(T) < MAX_JOB_SIZE);
 
 
 
