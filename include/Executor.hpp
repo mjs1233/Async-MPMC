@@ -6,7 +6,7 @@
 #define MCMS_EXECUTOR_HPP
 #include "PostSchedulerQueue.hpp"
 #include <thread>
-namespace async_mpmc {
+namespace async_mpmc::scheduler {
 
     struct ExecutorConfig {
         size_t queue_size;

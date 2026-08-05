@@ -9,7 +9,7 @@
 #include "PreSchedulerQueue.hpp"
 #include "PostSchedulerQueue.hpp"
 #include "Executor.hpp"
-namespace async_mpmc {
+namespace async_mpmc::scheduler {
     template <typename engine>
     class Scheduler {
     public:

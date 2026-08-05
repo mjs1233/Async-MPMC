@@ -9,7 +9,7 @@
 #include <memory>
 
 #include "JobItem.hpp"
-namespace async_mpmc {
+namespace async_mpmc::scheduler {
     /* type erasure for job item*/
     class Action {
     public:

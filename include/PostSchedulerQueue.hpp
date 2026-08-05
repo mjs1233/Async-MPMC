@@ -13,7 +13,7 @@
 #include "Action.hpp"
 #include "ActionStorage.hpp"
 
-namespace async_mpmc {
+namespace async_mpmc::scheduler {
 
     // single producer, single consumer 전용.
     class PostSchedulerQueue {

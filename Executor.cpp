@@ -3,7 +3,7 @@
 #include "executor.hpp"
 #include "cpu_timer.hpp"
 
-namespace async_mpmc {
+namespace async_mpmc::scheduler {
     Executor::Executor(const ExecutorConfig& config, ActionStorage& action_storage) :
     m_queue_size{config.queue_size},
     m_layer2_wait_us{config.layer2_wait_ms},

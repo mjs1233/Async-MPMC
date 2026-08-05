@@ -1,6 +1,6 @@
 #include "PreSchedulerQueue.hpp"
 
-namespace async_mpmc {
+namespace async_mpmc::scheduler {
 
     PreSchedulerQueue::PreSchedulerQueue(std::uint32_t queue_size, ActionStorage& action_storage)
         : m_queue_size(std::bit_ceil(queue_size))

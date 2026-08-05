@@ -6,7 +6,7 @@
 #define MCMS_ACTIONCOST_HPP
 #include <cstdint>
 
-namespace async_mpmc::core {
+namespace async_mpmc::scheduler {
 
     enum ActionType : uint8_t {
         pure_compute,

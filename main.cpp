@@ -11,7 +11,7 @@ struct Job2 {
 
 struct Job1 {
 
-    async_mpmc::Action action() && {
+    async_mpmc::scheduler::Action action() && {
         std::cout << "Job1" << std::endl;
         return Job2{};
     }

@@ -9,7 +9,7 @@
 #include <cinttypes>
 
 #include "Action.hpp"
-namespace async_mpmc {
+namespace async_mpmc::scheduler {
     static constexpr size_t MAX_JOB_SIZE = 64;
 
 

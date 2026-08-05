@@ -9,7 +9,7 @@
 #include "Action.hpp"
 #include "ActionStorage.hpp"
 
-namespace async_mpmc {
+namespace async_mpmc::scheduler {
 
     class PreSchedulerQueue {
     public:

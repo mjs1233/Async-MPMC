@@ -9,7 +9,7 @@
 #include <limits>
 
 #include "Action.hpp"
-namespace async_mpmc {
+namespace async_mpmc::scheduler {
     struct ActionHandle {
         uint64_t id;
         uint32_t index() const {
