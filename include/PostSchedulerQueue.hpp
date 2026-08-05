@@ -1,5 +1,9 @@
-#ifndef MCMS_PRESCHEDULERQUEUE_HPP
-#define MCMS_PRESCHEDULERQUEUE_HPP
+//
+// Created by tgian on 26. 8. 5..
+//
+
+#ifndef MCMS_POSTSCHEDULERQUEUE_HPP
+#define MCMS_POSTSCHEDULERQUEUE_HPP
 
 #include <atomic>
 #include <optional>
@@ -11,15 +15,16 @@
 
 namespace async_mpmc {
 
-    class PreSchedulerQueue {
+    // single producer, single consumer 전용.
+    class PostSchedulerQueue {
     public:
-        explicit PreSchedulerQueue(std::uint32_t queue_size, ActionStorage& action_storage);
+        explicit PostSchedulerQueue(size_t queue_size, ActionStorage& action_storage);
 
-        // 여러 producer가 동시에 호출 가능
-        bool push(Action&& action);
+        // single producer only!
+        bool push(ActionHandle action);
 
         // single consumer only!
-        std::optional<ActionHandle> pop();
+        std::optional<Action> pop();
 
     private:
         struct Slot {
@@ -32,10 +37,10 @@ namespace async_mpmc {
         ActionStorage& m_action_storage;
         std::vector<Slot> m_slots;
 
-        alignas(64) std::atomic<std::uint64_t> m_enqueue_pos{0};
+        alignas(64) std::uint64_t m_enqueue_pos{0};
         alignas(64) std::uint64_t m_dequeue_pos{0};
     };
 
-} // namespace async_mpmc
+}
 
-#endif //MCMS_PRESCHEDULERQUEUE_HPP
+#endif //MCMS_POSTSCHEDULERQUEUE_HPP

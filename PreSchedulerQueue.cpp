@@ -2,10 +2,10 @@
 
 namespace async_mpmc {
 
-    PreSchedulerQueue::PreSchedulerQueue(std::uint32_t queue_size)
+    PreSchedulerQueue::PreSchedulerQueue(std::uint32_t queue_size, ActionStorage& action_storage)
         : m_queue_size(std::bit_ceil(queue_size))
         , m_mask(m_queue_size - 1)
-        , m_action_storage(m_queue_size)
+        , m_action_storage(action_storage)
         , m_slots(m_queue_size)
     {
     }
@@ -40,20 +40,20 @@ namespace async_mpmc {
     }
 
     // single consumer only!
-    std::optional<Action> PreSchedulerQueue::pop() {
+    std::optional<ActionHandle> PreSchedulerQueue::pop() {
         Slot& slot = m_slots[m_dequeue_pos & m_mask];
 
         if (!slot.active.load(std::memory_order_acquire)) {
             return std::nullopt;
         }
 
-        std::optional<Action> action = m_action_storage.remove_action(slot.action_handle);
+        std::optional<ActionHandle> action_handle = slot.action_handle;
 
         slot.active.store(false, std::memory_order_release);
 
         m_dequeue_pos++;
 
-        return action;
+        return action_handle;
     }
 
 }

@@ -7,6 +7,7 @@ add_executable(MCMS
         main.cpp
         FileLoad.cpp
         PreSchedulerQueue.cpp
+        PostSchedulerQueue.cpp
 )
 
 include_directories(include)
