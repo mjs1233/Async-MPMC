@@ -32,10 +32,10 @@ namespace async_mpmc {
             ActionHandle action_handle{};
         };
 
-        std::uint32_t m_queue_size;
-        std::uint32_t m_mask;
+        std::uint32_t m_queue_size {};
+        std::uint32_t m_mask {};
         ActionStorage& m_action_storage;
-        std::vector<Slot> m_slots;
+        std::vector<Slot> m_slots {};
 
         alignas(64) std::uint64_t m_enqueue_pos{0};
         alignas(64) std::uint64_t m_dequeue_pos{0};

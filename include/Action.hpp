@@ -93,6 +93,7 @@ namespace async_mpmc {
     private:
         uint8_t m_job_item[MAX_JOB_SIZE] {};
         std::optional<Action>(*vtable_action)(void*) = nullptr;
+        uint64_t (*vtable_cost)(void*) = nullptr;
         void (*vtable_move)(void*, void*) = nullptr;
         void (*vtable_dtor)(void*) = nullptr;
 

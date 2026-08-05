@@ -29,7 +29,7 @@ namespace async_mpmc {
     private:
         void run();
         uint32_t multi_layer_wait();
-        size_t m_queue_size;
+        size_t m_queue_size {};
         PostSchedulerQueue m_post_scheduler_queue;
         std::jthread m_thread;
         std::atomic_bool m_active;
