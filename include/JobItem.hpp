@@ -9,20 +9,19 @@
 #include <cinttypes>
 
 #include "Action.hpp"
+namespace async_mpmc {
+    static constexpr size_t MAX_JOB_SIZE = 64;
 
-static constexpr size_t MAX_JOB_SIZE = 64;
 
-
-template <typename T>
-concept job_item_trait = requires(T t) {
-    { std::move(t).action() };
+    template <typename T>
+    concept job_item_trait = requires(T t) {
+        { std::move(t).action() };
+    }
+    && !requires(T t)
+    {
+        { t.action() };
+    }
+    && (sizeof(T) < MAX_JOB_SIZE);
 }
-&& !requires(T t)
-{
-    { t.action() };
-}
-&& (sizeof(T) < MAX_JOB_SIZE);
-
-
 
 #endif //MCMS_JOBITEM_HPP

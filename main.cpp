@@ -11,7 +11,7 @@ struct Job2 {
 
 struct Job1 {
 
-    Action action() && {
+    async_mpmc::Action action() && {
         std::cout << "Job1" << std::endl;
         return Job2{};
     }
@@ -22,7 +22,7 @@ struct Job1 {
 int main() {
 
 
-    Action ac{Job1{}};
+    async_mpmc::Action ac{Job1{}};
     ac();
 
     //TODO)

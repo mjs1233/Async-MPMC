@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 23)
 add_executable(MCMS
         main.cpp
         FileLoad.cpp
-        ActionQueue.cpp
+        PreSchedulerQueue.cpp
 )
 
 include_directories(include)
