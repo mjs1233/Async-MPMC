@@ -18,36 +18,52 @@ namespace async_mpmc::scheduler {
 
         Action(Action&& other) noexcept {
 
-            if (vtable_move != nullptr)
-                vtable_move(m_job_item, other.m_job_item);
+            if (other.vtable_move != nullptr) {
+                other.vtable_move(m_job_item, other.m_job_item);
+                vtable_action = other.vtable_action;
+                vtable_cost = other.vtable_cost;
+                vtable_move = other.vtable_move;
+                vtable_dtor = other.vtable_dtor;
 
-            vtable_action = other.vtable_action;
-            vtable_move = other.vtable_move;
-            vtable_dtor = other.vtable_dtor;
-
-            other.vtable_action = nullptr;
-            other.vtable_move = nullptr;
-            other.vtable_dtor = nullptr;
+                other.vtable_action = nullptr;
+                other.vtable_cost = nullptr;
+                other.vtable_move = nullptr;
+                other.vtable_dtor = nullptr;
+            }
         }
 
         Action& operator=(Action&& other) noexcept {
-            if (vtable_move != nullptr)
-                vtable_move(m_job_item, other.m_job_item);
 
-            vtable_action = other.vtable_action;
-            vtable_move = other.vtable_move;
-            vtable_dtor = other.vtable_dtor;
+            if (this != &other) {
+                if (vtable_dtor != nullptr) {
+                    vtable_dtor(m_job_item);
+                }
 
-            other.vtable_action = nullptr;
-            other.vtable_move = nullptr;
-            other.vtable_dtor = nullptr;
+                if (other.vtable_move != nullptr) {
+                    other.vtable_move(m_job_item, other.m_job_item);
+                    vtable_action = other.vtable_action;
+                    vtable_cost = other.vtable_cost;
+                    vtable_move = other.vtable_move;
+                    vtable_dtor = other.vtable_dtor;
+
+                    other.vtable_action = nullptr;
+                    other.vtable_cost = nullptr;
+                    other.vtable_move = nullptr;
+                    other.vtable_dtor = nullptr;
+                } else {
+                    vtable_action = nullptr;
+                    vtable_cost = nullptr;
+                    vtable_move = nullptr;
+                    vtable_dtor = nullptr;
+                }
+            }
             return *this;
         }
 
         template <job_item_trait U>
         Action(U&& item) {
             using T = std::decay_t<U>;
-            using ReturnType = decltype(std::declval<T>().action());
+            using ReturnType = decltype(std::declval<T&&>().action());
 
 
             new (m_job_item) T(std::forward<T>(item));
@@ -58,7 +74,7 @@ namespace async_mpmc::scheduler {
                     return std::nullopt;
                 }
                 else {
-                    return std::move(*static_cast<T*>(ptr)).action();
+                    return Action(std::move(*static_cast<T*>(ptr)).action());
                 }
             };
 
@@ -81,11 +97,8 @@ namespace async_mpmc::scheduler {
             run();
         }
 
-        void run() {
-            std::optional<Action> result = vtable_action(m_job_item);
-            if (result.has_value()) {
-                (*result)();
-            }
+        std::optional<Action> run() {
+            return vtable_action(m_job_item);
         }
 
 

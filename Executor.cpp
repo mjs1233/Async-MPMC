@@ -2,18 +2,24 @@
 #include <x86intrin.h>
 #include "executor.hpp"
 #include "cpu_timer.hpp"
+#include "PreSchedulerQueue.hpp"
 
 namespace async_mpmc::scheduler {
-    Executor::Executor(const ExecutorConfig& config, ActionStorage& action_storage) :
+    Executor::Executor(const ExecutorConfig& config,PreSchedulerQueue& pre_scheduler_queue, ActionStorage& action_storage) :
     m_queue_size{config.queue_size},
-    m_layer2_wait_us{config.layer2_wait_ms},
-    m_layer1_thres{config.layer1_thres},
-    m_layer2_thres{config.layer2_thres},
+    m_wait{config.layer1_thres,config.layer2_thres, config.layer2_wait_us},
+    m_pre_scheduler_queue{pre_scheduler_queue},
     m_post_scheduler_queue{config.queue_size, action_storage} {
 
-        m_thread = std::jthread([this]() {
-            run();
+        m_active.store(true, std::memory_order_acquire);
+
+        m_thread = std::jthread([this](std::stop_token stop_token) {
+            run(stop_token);
         });
+    }
+
+    Executor::~Executor() {
+        shutdown();
     }
 
     bool Executor::push(ActionHandle handle) {
@@ -26,42 +32,40 @@ namespace async_mpmc::scheduler {
 
 
     void Executor::set_active(bool state) {
-        m_active.store(state);
+        m_active.store(state, std::memory_order_release);
+        if (!state) {
+            m_thread.request_stop();
+        }
     }
 
-    void Executor::run() {
-        while (m_active.load(std::memory_order_relaxed)) {
+    void Executor::shutdown() {
+        m_active.store(false, std::memory_order_release);
+        m_thread.request_stop();
+        if (m_thread.joinable()) {
+            m_thread.join();
+        }
+    }
+
+    void Executor::run(std::stop_token stop_token) {
+        while (!stop_token.stop_requested() && m_active.load(std::memory_order_acquire)) {
 
             auto optional_action = m_post_scheduler_queue.pop();
             if (!optional_action) {
-                uint32_t result = multi_layer_wait();
-                if (result == 2) {
-                    ////// is queueing system dead? why no more work?
-                }
-                m_try_count++;
+                m_wait();
+                //std::printf("[executor] no action\n");
             }
             else {
-                m_try_count = 0;
+                m_wait.reset();
                 core::timer_ctx timer_ctx_ = core::cpu_timer_start();
-                optional_action.value().run();
+                auto next_action = optional_action.value().run();
+                if (next_action.has_value() && !stop_token.stop_requested() &&
+                    m_active.load(std::memory_order_acquire)) {
+                    m_pre_scheduler_queue.push(std::move(next_action.value()));
+                }
                 uint64_t run_time = core::cpu_timer_end(timer_ctx_);
             }
         }
     }
 
-    uint32_t Executor::multi_layer_wait() {
 
-        if (m_try_count < m_layer1_thres) {
-            asm volatile("" ::: "memory");
-            return 0;
-        }
-        else if (m_try_count < m_layer2_thres) {
-            std::this_thread::yield();
-            return 1;
-        }
-        else {
-            std::this_thread::sleep_for(std::chrono::microseconds(m_layer2_wait_us));
-            return 2;
-        }
-    }
 }

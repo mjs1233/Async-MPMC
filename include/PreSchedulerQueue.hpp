@@ -15,7 +15,7 @@ namespace async_mpmc::scheduler {
     public:
         explicit PreSchedulerQueue(std::uint32_t queue_size, ActionStorage& action_storage);
 
-        // 여러 producer가 동시에 호출 가능
+
         bool push(Action&& action);
 
         // single consumer only!
@@ -23,7 +23,7 @@ namespace async_mpmc::scheduler {
 
     private:
         struct Slot {
-            std::atomic_bool active{false};
+            std::atomic_uint64_t sequence{};
             ActionHandle action_handle{};
         };
 

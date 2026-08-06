@@ -10,8 +10,8 @@
 namespace async_mpmc::core {
     using timer_ctx = uint64_t;
 
-    inline timer_ctx cpu_timer_start();
-    inline uint64_t cpu_timer_end(const timer_ctx ctx);
+    timer_ctx cpu_timer_start();
+    uint64_t cpu_timer_end(const timer_ctx ctx);
 }
 
 #endif //MCMS_CPU_TIMER_HPP

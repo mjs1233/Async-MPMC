@@ -8,9 +8,8 @@
 #include <concepts>
 #include <cinttypes>
 
-#include "Action.hpp"
 namespace async_mpmc::scheduler {
-    static constexpr size_t MAX_JOB_SIZE = 64;
+    static constexpr size_t MAX_JOB_SIZE = 128;
 
 
     template <typename T>
@@ -21,7 +20,7 @@ namespace async_mpmc::scheduler {
     {
         { t.action() };
     }
-    && (sizeof(T) < MAX_JOB_SIZE);
+    && (sizeof(T) <= MAX_JOB_SIZE);
 }
 
 #endif //MCMS_JOBITEM_HPP
