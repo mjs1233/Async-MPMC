@@ -8,7 +8,7 @@
 #include <chrono>
 #include <thread>
 
-namespace async_mpmc::scheduler::utils {
+namespace async_mpmc::utils {
     struct MultiLayerWait {
 
         explicit MultiLayerWait(

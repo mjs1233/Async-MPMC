@@ -114,7 +114,7 @@ namespace async_mpmc {
                 }
             }
 
-            std::printf("[image process job done]\n");
+            //std::printf("[image process job done]\n");
             return ImageWriteJob{ std::move(output_data), width, height, channels, std::move(target_path) };
         }
     };
@@ -128,7 +128,7 @@ namespace async_mpmc {
             int height = 0;
             int channels = 0;
 
-            std::printf("[image load job]\n");
+            //std::printf("[image load job]\n");
             unsigned char* raw_pixels = stbi_load(
                 target.string().c_str(),
                 &width,
@@ -136,7 +136,7 @@ namespace async_mpmc {
                 &channels,
                 req_channels
             );
-            std::printf("[image load job done]\n");
+            //std::printf("[image load job done]\n");
             std::fflush(stdout);
             std::vector<uint8_t> buffer;
 

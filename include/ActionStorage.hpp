@@ -19,6 +19,7 @@ namespace async_mpmc::scheduler {
             return (id >> 32);
         }
     };
+
     class ActionStorage {
     private:
         struct Slot {
@@ -42,8 +43,10 @@ namespace async_mpmc::scheduler {
             m_slots.back().next.store(invalid_index);
         }
         std::optional<ActionHandle> register_action(Action&& action) {
+
             TaggedHead old_head = m_head.load(std::memory_order_acquire);
             TaggedHead new_head = {};
+
             while (true) {
                 if (old_head.index == invalid_index) {
                     return std::nullopt;
@@ -54,27 +57,32 @@ namespace async_mpmc::scheduler {
                     break;
                 }
             }
+
             Slot& new_slot = m_slots[old_head.index];
             new_slot.action = std::move(action);
 
             uint64_t id = static_cast<uint64_t>(old_head.index) + (static_cast<uint64_t>(new_slot.generation.load()) << 32);
             return ActionHandle{.id = id};
         }
+
         std::optional<Action> remove_action(ActionHandle action) {
             uint32_t idx = action.index();
             if (idx >= m_slots.size()) {
                 return std::nullopt;
             }
+
             Slot& slot = m_slots[idx];
             uint32_t expected_gen = action.generation();
             if (!slot.generation.compare_exchange_strong(expected_gen, expected_gen + 1,
                                                          std::memory_order_acq_rel)) {
                 return std::nullopt;
                                                          }
+
             std::optional<Action> result;
             result.emplace(std::move(slot.action));
             TaggedHead old_head = m_head.load(std::memory_order_acquire);
             uint32_t old_head_generation = 0;
+
             do {
                 slot.next.store(old_head.index, std::memory_order_relaxed);
                 old_head_generation = old_head.generation + 1;
@@ -82,6 +90,7 @@ namespace async_mpmc::scheduler {
                          old_head, TaggedHead{.generation = old_head_generation,.index = idx},
                          std::memory_order_release,
                          std::memory_order_acquire));
+
             return result;
         }
     private:

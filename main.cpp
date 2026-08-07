@@ -77,9 +77,8 @@ void schedule_images_in_directory(async_mpmc::scheduler::Scheduler<async_mpmc::s
 
 int main() {
 
-    constexpr size_t executor_size = 1;
-    constexpr size_t action_count = 2048;
-    async_mpmc::scheduler::ActionStorage action_storage{ action_count };
+
+    constexpr size_t executor_size = 5;
     async_mpmc::scheduler::ActionStorage storage(16);
     auto h1 = storage.register_action(async_mpmc::scheduler::Action{});
     assert(h1.has_value());
@@ -104,6 +103,8 @@ int main() {
     auto act3 = storage.remove_action(h3.value()); // 여기서 nullopt가 나는지 확인
     assert(act3.has_value());
 
+    constexpr size_t action_count = 2048;
+    async_mpmc::scheduler::ActionStorage action_storage{ action_count };
     async_mpmc::scheduler::Scheduler<async_mpmc::scheduler::RoundRobinEngine> scheduler {
         executor_size,
         async_mpmc::scheduler::RoundRobinEngine::config_type{},
@@ -121,7 +122,7 @@ int main() {
 
     schedule_images_in_directory(scheduler, input_dir);
 
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    std::this_thread::sleep_for(std::chrono::seconds(150));
     scheduler.shutdown();
 
     //TODO)

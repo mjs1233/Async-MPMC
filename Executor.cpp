@@ -52,12 +52,14 @@ namespace async_mpmc::scheduler {
             auto optional_action = m_post_scheduler_queue.pop();
             if (!optional_action) {
                 m_wait();
-                //std::printf("[executor] no action\n");
             }
             else {
                 m_wait.reset();
                 core::timer_ctx timer_ctx_ = core::cpu_timer_start();
                 auto next_action = optional_action.value().run();
+
+                ///flush free memory w/ spin lock
+
                 if (next_action.has_value() && !stop_token.stop_requested() &&
                     m_active.load(std::memory_order_acquire)) {
                     m_pre_scheduler_queue.push(std::move(next_action.value()));
