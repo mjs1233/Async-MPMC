@@ -5,8 +5,11 @@
 #include "Scheduler.hpp"
 #include <atomic>
 #include <chrono>
+#include <future>
 
 #include "FileLoad.hpp"
+#include "memory/MemoryBlock.hpp"
+#include "memory/SegregatedMemoryPool.hpp"
 inline static std::atomic<uint32_t> next_id{};
 struct random_delay_task {
     uint32_t delay;
@@ -77,32 +80,42 @@ void schedule_images_in_directory(async_mpmc::scheduler::Scheduler<async_mpmc::s
 
 int main() {
 
+    std::vector<async_mpmc::memory::SegregatedMemoryConfig> memory_configs;
+    memory_configs.emplace_back(async_mpmc::memory::SegregatedMemoryConfig{ .alloc_size = 128, .alloc_count = 256 });
+    memory_configs.emplace_back(async_mpmc::memory::SegregatedMemoryConfig{ .alloc_size = 512, .alloc_count = 256 });
+    memory_configs.emplace_back(async_mpmc::memory::SegregatedMemoryConfig{ .alloc_size = 1024, .alloc_count = 256 });
+    memory_configs.emplace_back(async_mpmc::memory::SegregatedMemoryConfig{ .alloc_size = 65536, .alloc_count = 16 });
+    async_mpmc::memory::SegregatedMemoryPool::init(memory_configs);
+    async_mpmc::memory::SegregatedMemoryPool* pool = async_mpmc::memory::SegregatedMemoryPool::get_instance();
+
+    size_t mem_size[4] = {128, 512, 1024, 65536};
+    std::vector<async_mpmc::memory::MemoryBlock> scoped_mem;
+
+    for (size_t i = 0; i < 100000; i++) {
+
+        uint32_t target_size = mem_size[std::rand() % 4];
+        uint8_t rands[5];
+        for (uint32_t i = 0; i < 5; ++i) {
+            rands[i] = std::rand() % 256;
+        }
+        async_mpmc::core::timer_ctx timer =
+            async_mpmc::core::cpu_timer_start();
+        auto m = pool->acquire(target_size);
+        if (!m) {
+            uint64_t clock_count = async_mpmc::core::cpu_timer_end(timer);
+            std::printf("fail time %lld", clock_count);
+            std::atomic_thread_fence(std::memory_order_acq_rel);
+            continue;
+        }
+
+
+        uint64_t clock_count = async_mpmc::core::cpu_timer_end(timer);
+    }
+
+
+
 
     constexpr size_t executor_size = 5;
-    async_mpmc::scheduler::ActionStorage storage(16);
-    auto h1 = storage.register_action(async_mpmc::scheduler::Action{});
-    assert(h1.has_value());
-
-    auto act1 = storage.remove_action(h1.value()); // 슬롯 0 반환
-    assert(act1.has_value());
-
-    auto h2 = storage.register_action(async_mpmc::scheduler::Action{}); // 슬롯 0 재사용
-    assert(h2.has_value());
-    assert(h2.value().generation() == 1);
-    assert(h2.value().index() == 0);
-
-
-    auto act2 = storage.remove_action(h2.value()); // 여기서 nullopt가 나는지 확인
-    assert(act2.has_value());
-
-    auto h3 = storage.register_action(async_mpmc::scheduler::Action{}); // 슬롯 0 재사용
-    assert(h3.has_value());
-    assert(h3.value().index() == 0);
-    assert(h3.value().generation() == 2);
-
-    auto act3 = storage.remove_action(h3.value()); // 여기서 nullopt가 나는지 확인
-    assert(act3.has_value());
-
     constexpr size_t action_count = 2048;
     async_mpmc::scheduler::ActionStorage action_storage{ action_count };
     async_mpmc::scheduler::Scheduler<async_mpmc::scheduler::RoundRobinEngine> scheduler {

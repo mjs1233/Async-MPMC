@@ -15,10 +15,12 @@ namespace async_mpmc::scheduler {
     template <typename T>
     concept job_item_trait = requires(T t) {
         { std::move(t).action() };
+        { std::move(t).acquire() } -> std::same_as<bool>;
     }
     && !requires(T t)
     {
         { t.action() };
+        { t.acquire() };
     }
     && (sizeof(T) <= MAX_JOB_SIZE);
 }

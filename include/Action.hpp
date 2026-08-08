@@ -21,12 +21,12 @@ namespace async_mpmc::scheduler {
             if (other.vtable_move != nullptr) {
                 other.vtable_move(m_job_item, other.m_job_item);
                 vtable_action = other.vtable_action;
-                vtable_cost = other.vtable_cost;
+                vtable_acquire = other.vtable_acquire;
                 vtable_move = other.vtable_move;
                 vtable_dtor = other.vtable_dtor;
 
                 other.vtable_action = nullptr;
-                other.vtable_cost = nullptr;
+                other.vtable_acquire = nullptr;
                 other.vtable_move = nullptr;
                 other.vtable_dtor = nullptr;
             }
@@ -42,17 +42,17 @@ namespace async_mpmc::scheduler {
                 if (other.vtable_move != nullptr) {
                     other.vtable_move(m_job_item, other.m_job_item);
                     vtable_action = other.vtable_action;
-                    vtable_cost = other.vtable_cost;
+                    vtable_acquire = other.vtable_acquire;
                     vtable_move = other.vtable_move;
                     vtable_dtor = other.vtable_dtor;
 
                     other.vtable_action = nullptr;
-                    other.vtable_cost = nullptr;
+                    other.vtable_acquire = nullptr;
                     other.vtable_move = nullptr;
                     other.vtable_dtor = nullptr;
                 } else {
                     vtable_action = nullptr;
-                    vtable_cost = nullptr;
+                    vtable_acquire = nullptr;
                     vtable_move = nullptr;
                     vtable_dtor = nullptr;
                 }
@@ -78,6 +78,10 @@ namespace async_mpmc::scheduler {
                 }
             };
 
+            vtable_acquire = [](void* ptr) -> bool {
+                return std::move(*static_cast<T*>(ptr)).acquire();
+            };
+
             vtable_move = [](void* dst, void* src) {
                 new (dst) T{std::move(*static_cast<T*>(src))};
             };
@@ -93,6 +97,10 @@ namespace async_mpmc::scheduler {
             }
         }
 
+        bool acquire() {
+            return vtable_acquire(m_job_item);
+        }
+
         void operator()() {
             run();
         }
@@ -105,8 +113,8 @@ namespace async_mpmc::scheduler {
 
     private:
         uint8_t m_job_item[MAX_JOB_SIZE] {};
-        std::optional<Action>(*vtable_action)(void*) = nullptr;
-        uint64_t (*vtable_cost)(void*) = nullptr;
+        std::optional<Action> (*vtable_action)(void*) = nullptr;
+        bool (*vtable_acquire)(void*) = nullptr;
         void (*vtable_move)(void*, void*) = nullptr;
         void (*vtable_dtor)(void*) = nullptr;
 

@@ -12,7 +12,9 @@ namespace async_mpmc::utils {
     struct MultiLayerWait {
 
         explicit MultiLayerWait(
-            std::uint32_t m_layer1_thres, std::uint32_t m_layer2_thres,std::uint32_t m_layer2_wait_us
+            std::uint32_t m_layer1_thres,
+            std::uint32_t m_layer2_thres,
+            std::uint32_t m_layer2_wait_us
             );
 
         uint32_t operator()();
